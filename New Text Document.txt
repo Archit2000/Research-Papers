@@ -1,0 +1,34 @@
+ssh architkane.cse22.itbhu@paramshivay.iitbhu.ac.in  -p 4422 
+ssh architkane.cse22.itbhu@172.16.40.30 -p 4422
+
+ cd /scratch/architkane.cse22.itbhu/
+
+
+#!/bin/bash
+#SBATCH -N 1
+#SBATCH --ntasks-per-node=20
+#SBATCH --error=job.%J.err
+#SBATCH --output=job.%J.out
+#SBATCH --time=01:00:00
+#SBATCH --job-name=Biltu
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+
+
+#!/bin/bash
+#SBATCH -N 8
+#SBATCH --ntasks-per-node=20
+#SBATCH --error=job.%J.err
+#SBATCH --output=job.%J.out
+#SBATCH --time=4-00:00:00
+#SBATCH --job-name=Biltu_CPU
+#SBATCH --partition=cpu
+
+
+sbatch test.sh
+squeue --name=ArchitTest
+scancel 
+pip install torch --User
+
+cat job.920340.out | grep "Accuracy ="
+cat Physics/0.01/parameter_readings.csv | grep ",0.9"
