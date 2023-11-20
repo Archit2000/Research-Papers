@@ -118,7 +118,7 @@ print(dataset)
 # In[27]:
 
 
-dataset = Planetoid(root='data/planetoid',name=dataset_global)
+dataset = Planetoid(root='data/planetoid', split="random",num_val= 1055, num_test= 1055, name=dataset_global)
 print(dataset[0])
 
 edge_list = dataset[0].edge_index
@@ -420,6 +420,24 @@ def get_accuracy(C_0,L,X_t_0):
             loss.backward()
             optimizer.step()
             return loss
+        
+        def test():
+            model.eval()
+            out = model(dataset[0].x, dataset[0].edge_index)
+            pred = out.argmax(dim=1)  # Use the class with highest probability.
+            test_correct = pred[dataset[0].test_mask] == dataset[0].y[dataset[0].test_mask]  # Check against ground-truth labels.
+            test_acc = int(test_correct.sum()) / int(dataset[0].test_mask.sum())  # Derive ratio of correct predictions.
+            return test_acc
+
+        def val():
+            model.eval()
+            out = model(dataset[0].x, dataset[0].edge_index)
+            pred = out.argmax(dim=1)  # Use the class with highest probability.
+            val_correct = pred[dataset[0].val_mask] == dataset[0].y[dataset[0].val_mask]  # Check against ground-truth labels.
+            val_acc = int(val_correct.sum()) / int(dataset[0].val_mask.sum())  # Derive ratio of correct predictions.
+            return val_acc
+        
+
         now1 = datetime.now()
         losses=[]
         for epoch in range(200):
@@ -448,6 +466,11 @@ def get_accuracy(C_0,L,X_t_0):
         pred=np.array(pred)
         correct =(pred[zz]==labels[zz]).sum()
         acc = int(correct) /NO_OF_NODES
+        test_acc = test()
+        val_acc = val()
+        print(f'Train Accuracy: {acc:.4f}')
+        print(f'Test Accuracy: {test_acc:.4f}')
+        print(f'Validtion Accuracy: {val_acc:.4f}')
         return acc
 
 
@@ -477,26 +500,52 @@ def getSparsityAndHomophily(C,theta):
 # In[37]:
 
 
+def fitness_function(alpha_param,beta_param,gamma_param,lambda_param,delta_param):
+    print("\n---------------------------------------------------------------------------------------------------------------")
+    print(alpha_param,beta_param,gamma_param,lambda_param,delta_param)
+    try:
+        #alpha_param,beta_param,gamma_param,lambda_param,delta_param = temp_param
+        X_tilde = random(k, n, density=0.15, random_state=1, data_rvs=temp2.rvs)
+        C = random(p, k, density=0.15, random_state=1, data_rvs=temp2.rvs)
+        X_t_0,C_0 = experiment(alpha_param,beta_param,gamma_param,lambda_param,delta_param,C,X_tilde,theta,X)
+        L = theta
+        
+        #getSparsityAndHomophily(C_0,theta)
+        
+        C_0 = C_0.cpu().detach().numpy()
+        X_t_0 = X_t_0.cpu().detach().numpy()
+        C_t_0 = C_0.T
 
-#alpha_param,beta_param,gamma_param,lambda_param,delta_param = temp_param
-X_tilde = random(k, n, density=0.15, random_state=1, data_rvs=temp2.rvs)
-C = random(p, k, density=0.15, random_state=1, data_rvs=temp2.rvs)
-X_t_0,C_0 = experiment(alpha_param,beta_param,gamma_param,lambda_param,delta_param,C,X_tilde,theta,X)
-L = theta
+        try:
+            L = L.cpu().detach().numpy()
+        except:
+            L = L
+        
+        acc = get_accuracy(C_0,L,X_t_0)
+        #print("Accuracy = " + str(acc))
+        #save_readings(alpha_param,beta_param,gamma_param,lambda_param,delta_param,r_global,k_global,acc)
+        #return (1-acc)
+    except Exception as e:
+        print(e)
 
-#getSparsityAndHomophily(C_0,theta)
-
-C_0 = C_0.cpu().detach().numpy()
-X_t_0 = X_t_0.cpu().detach().numpy()
-C_t_0 = C_0.T
-
-try:
-    L = L.cpu().detach().numpy()
-except:
-    L = L
-acc = get_accuracy(C_0,L,X_t_0)
-print(alpha_param,beta_param,gamma_param,lambda_param,delta_param)
-print("Accuracy = " + str(acc))
+for alpha_param in [0.001]:
+    for beta_param in [0.001]:
+        for gamma_param in [100]:
+            for lambda_param in [100]:
+                for delta_param in [0.001]:
+                    try:
+                        fitness_function(alpha_param,beta_param,gamma_param,lambda_param,delta_param)
+                    except Exception as e:
+                        print(e)
+# In[38]:
 
 
+lb = [0.0001,0.0001,0.0001,0.0001,0.0001]
+ub = [100,100,100,100,100]
+
+
+# In[39]:
+
+
+#pso(fitness_function, lb, ub,phip=0.5,swarmsize=150,maxiter= 100,phig=0.45,omega=0.5,debug=True)
 
