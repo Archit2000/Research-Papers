@@ -32,3 +32,4 @@ pip install torch --User
 
 cat job.920340.out | grep "Accuracy ="
 cat Physics/0.01/parameter_readings.csv | grep ",0.9"
+100.0,0.1,0.0001,0.01,0.0001,0.01,344.0,0.4845041022816224
